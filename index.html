@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>We're Not Really Strangers</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #f5f0e8;
+    --warm-white: #faf8f4;
+    --blush: #e8c4b0;
+    --terracotta: #c4673a;
+    --deep: #2a1f1a;
+    --mid: #6b4f3a;
+    --light-mid: #a07858;
+    --card-bg: #fdf9f5;
+  }
+
+  body {
+    background: var(--cream);
+    min-height: 100vh;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--deep);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.5;
+  }
+
+  /* ── SCREEN SYSTEM ── */
+  .screen { display: none; width: 100%; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* ── INTRO SCREEN ── */
+  #intro {
+    justify-content: center;
+    padding: 40px 24px;
+    background: var(--deep);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #intro::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(196,103,58,0.15) 0%, transparent 70%);
+    top: -200px; right: -200px;
+  }
+  #intro::after {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(232,196,176,0.1) 0%, transparent 70%);
+    bottom: -100px; left: -100px;
+  }
+
+  .intro-inner {
+    text-align: center;
+    max-width: 380px;
+    position: relative;
+    z-index: 1;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  .intro-eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--blush);
+    opacity: 0.7;
+    margin-bottom: 16px;
+  }
+
+  .intro-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(32px, 8vw, 52px);
+    color: var(--warm-white);
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+
+  .intro-title em {
+    color: var(--blush);
+    font-style: italic;
+  }
+
+  .intro-subtitle {
+    font-size: 14px;
+    color: var(--blush);
+    opacity: 0.65;
+    margin-bottom: 48px;
+    line-height: 1.6;
+  }
+
+  .level-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 32px;
+  }
+
+  .level-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(232,196,176,0.2);
+    border-radius: 14px;
+    padding: 18px 24px;
+    color: var(--warm-white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .level-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(196,103,58,0.15), transparent);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  .level-btn:hover::before, .level-btn.selected::before { opacity: 1; }
+  .level-btn.selected {
+    border-color: var(--terracotta);
+    background: rgba(196,103,58,0.12);
+  }
+
+  .level-num {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(196,103,58,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--blush);
+    flex-shrink: 0;
+  }
+
+  .level-btn.selected .level-num {
+    background: var(--terracotta);
+    color: white;
+  }
+
+  .level-info strong {
+    display: block;
+    font-size: 15px;
+    margin-bottom: 2px;
+  }
+
+  .level-info span {
+    font-size: 12px;
+    opacity: 0.5;
+  }
+
+  .start-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--terracotta);
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .start-btn:hover {
+    background: #b55a30;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(196,103,58,0.4);
+  }
+
+  .start-btn:active { transform: translateY(0); }
+
+  /* ── GAME SCREEN ── */
+  #game {
+    padding: 0;
+    background: var(--cream);
+    min-height: 100vh;
+  }
+
+  .game-header {
+    width: 100%;
+    padding: 20px 24px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(160,120,88,0.15);
+  }
+
+  .game-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    color: var(--mid);
+    font-style: italic;
+  }
+
+  .level-badge {
+    background: var(--deep);
+    color: var(--blush);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 20px;
+  }
+
+  .back-btn {
+    background: none;
+    border: none;
+    color: var(--light-mid);
+    font-size: 13px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    opacity: 0.7;
+  }
+
+  .back-btn:hover { opacity: 1; }
+
+  /* Card area */
+  .card-area {
+    flex: 1;
+    width: 100%;
+    max-width: 480px;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    margin: 0 auto;
+  }
+
+  .progress-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .progress-text {
+    font-size: 12px;
+    color: var(--light-mid);
+    letter-spacing: 0.05em;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 3px;
+    background: rgba(160,120,88,0.2);
+    border-radius: 2px;
+    margin-bottom: 8px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--terracotta);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  /* THE CARD */
+  .card-wrapper {
+    width: 100%;
+    perspective: 1000px;
+  }
+
+  .card {
+    width: 100%;
+    min-height: 280px;
+    background: var(--card-bg);
+    border-radius: 24px;
+    padding: 40px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    box-shadow:
+      0 2px 4px rgba(42,31,26,0.04),
+      0 8px 32px rgba(42,31,26,0.08),
+      0 0 0 1px rgba(160,120,88,0.12);
+    animation: cardIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .card-type-tag {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--light-mid);
+    opacity: 0.6;
+    white-space: nowrap;
+  }
+
+  .card-decoration {
+    width: 32px; height: 1px;
+    background: var(--blush);
+    opacity: 0.5;
+    margin-bottom: 24px;
+  }
+
+  .card-question {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(18px, 4.5vw, 22px);
+    line-height: 1.5;
+    color: var(--deep);
+    max-width: 320px;
+  }
+
+  .card-question.wildcard-text {
+    font-family: 'DM Sans', sans-serif;
+    font-size: clamp(15px, 4vw, 18px);
+    font-weight: 400;
+    color: var(--mid);
+  }
+
+  .card-question.reminder-text {
+    font-style: italic;
+    color: var(--light-mid);
+    font-size: clamp(16px, 4vw, 19px);
+  }
+
+  .wildcard-badge {
+    margin-top: 20px;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--terracotta);
+    opacity: 0.8;
+  }
+
+  /* Whose turn indicator */
+  .turn-indicator {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: rgba(196,103,58,0.07);
+    border-radius: 14px;
+    border: 1px solid rgba(196,103,58,0.15);
+  }
+
+  .turn-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--terracotta);
+    flex-shrink: 0;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .turn-text {
+    font-size: 14px;
+    color: var(--mid);
+    line-height: 1.4;
+  }
+
+  .turn-text strong { color: var(--deep); }
+
+  /* Action buttons */
+  .action-row {
+    width: 100%;
+    display: flex;
+    gap: 12px;
+  }
+
+  .btn-next {
+    flex: 1;
+    padding: 18px;
+    background: var(--deep);
+    border: none;
+    border-radius: 14px;
+    color: var(--warm-white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-next:hover {
+    background: #3d2d25;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(42,31,26,0.2);
+  }
+
+  .btn-skip {
+    padding: 18px 20px;
+    background: transparent;
+    border: 1px solid rgba(160,120,88,0.3);
+    border-radius: 14px;
+    color: var(--light-mid);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-skip:hover {
+    background: rgba(160,120,88,0.08);
+    border-color: rgba(160,120,88,0.5);
+  }
+
+  .btn-advance {
+    width: 100%;
+    padding: 18px;
+    background: var(--terracotta);
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-advance:hover {
+    background: #b55a30;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(196,103,58,0.35);
+  }
+
+  .cards-played-note {
+    font-size: 12px;
+    color: var(--light-mid);
+    text-align: center;
+    opacity: 0.7;
+  }
+
+  /* ── END SCREEN ── */
+  #end {
+    justify-content: center;
+    padding: 40px 24px;
+    background: var(--deep);
+  }
+
+  .end-inner {
+    text-align: center;
+    max-width: 360px;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  .end-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 7vw, 44px);
+    color: var(--warm-white);
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+
+  .end-title em { color: var(--blush); font-style: italic; }
+
+  .end-subtitle {
+    font-size: 15px;
+    color: var(--blush);
+    opacity: 0.65;
+    line-height: 1.6;
+    margin-bottom: 48px;
+  }
+
+  .final-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(232,196,176,0.2);
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 32px;
+    text-align: left;
+  }
+
+  .final-card-label {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--blush);
+    opacity: 0.5;
+    margin-bottom: 12px;
+  }
+
+  .final-card-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    color: var(--warm-white);
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  .play-again-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--terracotta);
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .play-again-btn:hover {
+    background: #b55a30;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(196,103,58,0.4);
+  }
+
+  /* ── LEVEL TRANSITION ── */
+  #transition {
+    justify-content: center;
+    padding: 40px 24px;
+    background: var(--cream);
+  }
+
+  .transition-inner {
+    text-align: center;
+    max-width: 360px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .transition-level-num {
+    font-size: 80px;
+    font-family: 'Playfair Display', serif;
+    color: rgba(196,103,58,0.15);
+    line-height: 1;
+    margin-bottom: 0px;
+  }
+
+  .transition-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    color: var(--deep);
+    margin-bottom: 12px;
+  }
+
+  .transition-desc {
+    font-size: 14px;
+    color: var(--mid);
+    line-height: 1.7;
+    margin-bottom: 40px;
+    opacity: 0.8;
+  }
+
+  .transition-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--deep);
+    border: none;
+    border-radius: 14px;
+    color: var(--warm-white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .transition-btn:hover {
+    background: #3d2d25;
+    transform: translateY(-1px);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Responsive */
+  @media (max-width: 400px) {
+    .card { padding: 36px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- INTRO SCREEN -->
+<div id="intro" class="screen active">
+  <div class="intro-inner">
+    <p class="intro-eyebrow">A card game for two</p>
+    <h1 class="intro-title">We're Not<br><em>Really</em> Strangers</h1>
+    <p class="intro-subtitle">Take turns drawing cards.<br>One person reads, both reflect.</p>
+
+    <div class="level-selector">
+      <button class="level-btn selected" onclick="selectLevel(1, this)">
+        <div class="level-num">1</div>
+        <div class="level-info">
+          <strong>Perception</strong>
+          <span>First impressions & assumptions</span>
+        </div>
+      </button>
+      <button class="level-btn" onclick="selectLevel(2, this)">
+        <div class="level-num">2</div>
+        <div class="level-info">
+          <strong>Connection</strong>
+          <span>Deeper questions, real answers</span>
+        </div>
+      </button>
+      <button class="level-btn" onclick="selectLevel(3, this)">
+        <div class="level-num">3</div>
+        <div class="level-info">
+          <strong>Us</strong>
+          <span>Questions made for you two</span>
+        </div>
+      </button>
+      <button class="level-btn" onclick="selectLevel('all', this)">
+        <div class="level-num">✦</div>
+        <div class="level-info">
+          <strong>Full Game</strong>
+          <span>All levels in order</span>
+        </div>
+      </button>
+    </div>
+
+    <button class="start-btn" onclick="startGame()">Draw First Card</button>
+  </div>
+</div>
+
+<!-- LEVEL TRANSITION SCREEN -->
+<div id="transition" class="screen">
+  <div class="transition-inner">
+    <div class="transition-level-num" id="transition-num">2</div>
+    <h2 class="transition-title" id="transition-title">Connection</h2>
+    <p class="transition-desc" id="transition-desc">Who are you really? This round is about asking the rarely asked questions and connecting on a deeper level.</p>
+    <button class="transition-btn" onclick="beginLevel()">Begin Level</button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game" class="screen">
+  <div class="game-header">
+    <button class="back-btn" onclick="goHome()">← Home</button>
+    <div class="game-logo">wnrs</div>
+    <div class="level-badge" id="level-badge">Level 1</div>
+  </div>
+
+  <div class="card-area">
+    <div style="width:100%">
+      <div class="progress-row">
+        <span class="progress-text" id="progress-text">Card 1</span>
+        <span class="progress-text" id="progress-pct">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="card-wrapper">
+      <div class="card" id="main-card">
+        <span class="card-type-tag" id="card-type-tag">Question</span>
+        <div class="card-decoration"></div>
+        <p class="card-question" id="card-question">Loading...</p>
+        <p class="wildcard-badge" id="wildcard-badge" style="display:none">★ Wildcard</p>
+      </div>
+    </div>
+
+    <div class="turn-indicator">
+      <div class="turn-dot"></div>
+      <div class="turn-text" id="turn-text"><strong>You</strong> drew this card — read it aloud to your partner.</div>
+    </div>
+
+    <div class="action-row">
+      <button class="btn-next" onclick="nextCard()">Next Card →</button>
+      <button class="btn-skip" onclick="skipCard()">Skip</button>
+    </div>
+
+    <div id="advance-section" style="display:none; width:100%; display:none; flex-direction:column; gap:12px; align-items:center;">
+      <p class="cards-played-note" id="cards-played-note"></p>
+      <button class="btn-advance" id="advance-btn" onclick="advanceLevel()">Continue to Next Level →</button>
+    </div>
+  </div>
+</div>
+
+<!-- END SCREEN -->
+<div id="end" class="screen">
+  <div class="end-inner">
+    <h1 class="end-title">You're not<br><em>strangers</em> anymore.</h1>
+    <p class="end-subtitle">Thank you for being open. The best conversations happen when we actually show up.</p>
+
+    <button class="play-again-btn" onclick="goHome()">Play Again</button>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = {
+  1: {
+    questions: [
+      "Do you think I intimidate others? Why or why not?",
+      "Do you think I've ever been fired from a job? If so, what for?",
+      "What does my Instagram tell you about me?",
+      "What was your first impression of me?",
+      "Do I seem like a coffee or tea person? Sweetened or unsweetened?",
+      "What's the first thing you noticed about me?",
+      "What subject do you think I thrived in at school? Did I fail any?",
+      "What about me intrigues you?",
+      "Do I seem like a morning person or a night owl? Why?",
+      "What does my phone wallpaper tell you about me?",
+      "If you were to buy me a present, knowing nothing about me other than what I look like, what would it be?",
+      "What compliment do you think I hear the most?",
+      "Do I look kind? Explain.",
+      "What about me is most strange or unfamiliar to you?",
+      "How likely am I to go camping? How high maintenance is my set up?",
+      "Do I seem like a cat or dog person?",
+      "Do I seem like more of a creative or analytical type? Explain.",
+      "How many speeding tickets do you think I've gotten in my life?",
+      "Do I seem like someone who would get a name tattooed on myself? Why or why not?",
+      "What do you think I'm most likely to splurge on?",
+      "Finish the sentence: Just by looking at you I'd think ________.",
+      "What character would I play in a movie?",
+      "Do I remind you of anyone?",
+      "Who do you think my celebrity crush is?",
+      "Do you think I've ever checked an ex's phone for evidence?",
+      "Do you think I was popular in school? Explain.",
+      "On a scale of 1–10, how messy do you think my car is? 1 being cleanest, 10 being a complete disaster. Explain.",
+      "Do you think I fall in love easily? Why or why not?",
+      "Do you think plants thrive or die in my care? Explain.",
+      "Do you think I'm usually early, on time, or late to events? Explain.",
+      "As a child, what do you think I wanted to be?"
+    ],
+    wildcards: [
+      "Make an assumption about me. (Both players)",
+      "Close your eyes. What color are my eyes?",
+      "Write down something others would never guess about you just by looking at you. (Both players). Compare.",
+      "Think of your favorite brand of cereal. On the count of 3, say your answers out loud! (Both players)"
+    ],
+    reminder: "Let go of your attachment to the outcome.",
+    name: "Perception",
+    desc: "This round is about gaining perspective on what first impressions we give off and challenging the assumptions we make about others."
+  },
+  2: {
+    questions: [
+      "What are you more afraid of, failure or success? And why?",
+      "If you have — when was the moment you realized you weren't invincible?",
+      "What was your mother's name? And the most beautiful thing about her?",
+      "How can you become a better person?",
+      "Have you ever told someone 'I love you' but didn't mean it? If so, why?",
+      "What is the last thing you lied to your mother about?",
+      "What is a dream you've let go of?",
+      "Are you missing anyone right now? Do you think they are missing you too?",
+      "What's the most pain you've ever been in that wasn't physical?",
+      "If you could get to know someone in your life on a deeper level, who would it be and why?",
+      "What are you still trying to prove to yourself?",
+      "Are you lying to yourself about anything?",
+      "What lesson took you the longest to unlearn?",
+      "Do you think the image you have of yourself matches the image people see you as?",
+      "If you could have it your way: who would you be with? Where would you be? And what would you be doing?",
+      "Is there a feeling you miss?",
+      "What's been your happiest memory this past year?",
+      "What's your father's name? And tell me one thing about him.",
+      "What is something you wouldn't want to change about yourself?",
+      "What title would you give this chapter in your life?",
+      "What question are you trying to answer most in your life right now?",
+      "What is a compliment you wish you received more frequently?",
+      "What has been your earliest recollection of happiness?",
+      "When was the last time you surprised yourself?",
+      "How would you describe the feeling of being loved in one word?",
+      "What do you crave more of?",
+      "What's been the best compliment a stranger has ever given you?"
+    ],
+    wildcards: [
+      "Press shuffle on your music library. Explain the first song that comes up!",
+      "Both players write the three most important things in life to you. (30 seconds). Compare.",
+      "Show the first photo in your camera roll. Explain.",
+      "Think of something you strongly dislike that most people love. On the count of 3 say it loud! (Both players)",
+      "Questions are an art form. Create your own question.",
+      "Ask a question you'd be too afraid to ask. Something you wouldn't dare to ask.",
+      "Admit something."
+    ],
+    reminder: "Be more interested in understanding others than being understood.",
+    name: "Connection",
+    desc: "Who are you really? This round is about asking the rarely asked questions and connecting on a deeper level."
+  }
+};
+
+QUESTIONS[3] = {
+  questions: [
+    "What's a moment recently where you really wished I was physically there?",
+    "What's something you do alone that you can't wait to do together someday?",
+    "What does 'home' mean to you right now?",
+    "What's something I do that you find endearing but have never told me?",
+    "What's a way I make you feel cared for, even from far away?",
+    "What's a side of yourself you feel like I haven't fully seen yet?",
+    "What's the first thing you want to do when we're finally in the same place?",
+    "What's a small, ordinary moment you're looking forward to sharing with me?",
+    "Where do you see us in a year — be honest, not just hopeful?",
+    "Is there something you've been wanting to say to me but haven't found the right moment?",
+    "What's your biggest fear about us?",
+    "What makes you feel most secure in our relationship?"
+  ],
+  wildcards: [
+    "Name one thing about the other person that has genuinely surprised you.",
+    "Tell your partner something you've noticed about them that you've never said out loud."
+  ],
+  reminder: "The distance is temporary. This connection is not.",
+  name: "Us",
+  desc: "Made just for the two of you. Questions about distance, longing, and what you're building together."
+};
+
+// State
+let selectedLevel = 1;
+let currentLevel = 1;
+let deck = [];
+let currentIndex = 0;
+let cardsPlayed = 0;
+let isFullGame = false;
+let turnIsYours = true;
+
+function selectLevel(lvl, btn) {
+  document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedLevel = lvl;
+}
+
+function buildDeck(level) {
+  const data = QUESTIONS[level];
+  let cards = [];
+
+  // Mix in wildcards and reminder
+  const qCopy = [...data.questions];
+  const wCopy = [...data.wildcards];
+
+  // Shuffle
+  shuffle(qCopy);
+  shuffle(wCopy);
+
+  // Interleave: roughly 1 wildcard per 5 questions
+  let wi = 0;
+  for (let i = 0; i < qCopy.length; i++) {
+    cards.push({ type: 'question', text: qCopy[i] });
+    if ((i + 1) % 5 === 0 && wi < wCopy.length) {
+      cards.push({ type: 'wildcard', text: wCopy[wi++] });
+    }
+  }
+
+  // Remaining wildcards at end
+  while (wi < wCopy.length) {
+    cards.push({ type: 'wildcard', text: wCopy[wi++] });
+  }
+
+
+
+  return cards;
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function startGame() {
+  if (selectedLevel === 'all') {
+    isFullGame = true;
+    currentLevel = 1;
+  } else {
+    isFullGame = false;
+    currentLevel = selectedLevel;
+  }
+  deck = buildDeck(currentLevel);
+  currentIndex = 0;
+  cardsPlayed = 0;
+  turnIsYours = true;
+  showScreen('game');
+  updateLevelBadge();
+  renderCard();
+}
+
+function updateLevelBadge() {
+  document.getElementById('level-badge').textContent = `Level ${currentLevel}`;
+}
+
+function renderCard() {
+  if (currentIndex >= deck.length) {
+    if (isFullGame && currentLevel < 3) {
+      showTransition(currentLevel + 1);
+    } else {
+      showScreen('end');
+    }
+    return;
+  }
+
+  const card = deck[currentIndex];
+  const q = document.getElementById('card-question');
+  const tag = document.getElementById('card-type-tag');
+  const badge = document.getElementById('wildcard-badge');
+  const cardEl = document.getElementById('main-card');
+
+  // Reset animation
+  cardEl.style.animation = 'none';
+  cardEl.offsetHeight;
+  cardEl.style.animation = '';
+
+  q.className = 'card-question';
+  badge.style.display = 'none';
+
+  if (card.type === 'wildcard') {
+    tag.textContent = 'Wildcard';
+    q.textContent = card.text;
+    q.classList.add('wildcard-text');
+    badge.style.display = 'block';
+    cardEl.style.background = '#fdf6f0';
+  } else if (card.type === 'reminder') {
+    tag.textContent = 'Reminder';
+    q.textContent = '"' + card.text + '"';
+    q.classList.add('reminder-text');
+    cardEl.style.background = '#f8f5f0';
+  } else {
+    tag.textContent = 'Question';
+    q.textContent = card.text;
+    cardEl.style.background = 'var(--card-bg)';
+  }
+
+  // Progress
+  const pct = Math.round((currentIndex / deck.length) * 100);
+  document.getElementById('progress-text').textContent = `Card ${currentIndex + 1} of ${deck.length}`;
+  document.getElementById('progress-pct').textContent = `${pct}%`;
+  document.getElementById('progress-fill').style.width = pct + '%';
+
+  // Turn
+  const turnText = document.getElementById('turn-text');
+  if (turnIsYours) {
+    turnText.innerHTML = '<strong>You</strong> drew this card — read it aloud to your partner.';
+  } else {
+    turnText.innerHTML = 'Your <strong>partner</strong> drew this card — they\'ll read it to you.';
+  }
+
+  // Advance section
+  updateAdvanceSection();
+}
+
+function updateAdvanceSection() {
+  const section = document.getElementById('advance-section');
+  const note = document.getElementById('cards-played-note');
+  const MIN = currentLevel === 3 ? 8 : 15;
+
+  if (cardsPlayed >= MIN) {
+    section.style.display = 'flex';
+    if (isFullGame && currentLevel < 3) {
+      const nextName = QUESTIONS[currentLevel + 1].name;
+      note.textContent = `${cardsPlayed} cards played — ready to go deeper?`;
+      document.getElementById('advance-btn').textContent = `Move to Level ${currentLevel + 1}: ${nextName} →`;
+    } else {
+      note.textContent = `${cardsPlayed} cards played — you can wrap up or keep going!`;
+      document.getElementById('advance-btn').textContent = 'End Game ✦';
+    }
+  } else {
+    section.style.display = 'none';
+  }
+}
+
+function nextCard() {
+  currentIndex++;
+  cardsPlayed++;
+  turnIsYours = !turnIsYours;
+  renderCard();
+}
+
+function skipCard() {
+  currentIndex++;
+  renderCard();
+}
+
+function advanceLevel() {
+  if (isFullGame && currentLevel < 3) {
+    showTransition(currentLevel + 1);
+  } else {
+    showScreen('end');
+  }
+}
+
+function showTransition(nextLevel) {
+  const data = QUESTIONS[nextLevel];
+  document.getElementById('transition-num').textContent = nextLevel;
+  document.getElementById('transition-title').textContent = 'Level ' + nextLevel + ': ' + data.name;
+  document.getElementById('transition-desc').textContent = data.desc;
+  showScreen('transition');
+}
+
+function beginLevel() {
+  currentLevel = currentLevel === 1 ? 2 : 3;
+  deck = buildDeck(currentLevel);
+  currentIndex = 0;
+  cardsPlayed = 0;
+  turnIsYours = true;
+  updateLevelBadge();
+  showScreen('game');
+  renderCard();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goHome() {
+  showScreen('intro');
+}
+</script>
+</body>
+</html>
